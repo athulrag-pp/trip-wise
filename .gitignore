@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Node / React
+node_modules/
+dist/
+dist-ssr/
+*.local
+.DS_Store
+
+# Machine Learning & Data
+*.joblib
+*.pkl
+*.sqlite3
+*.db
+
+# Environment variables
+.env
+.env.local
