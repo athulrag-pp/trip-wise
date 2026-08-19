@@ -2,16 +2,42 @@
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000/api';
 
-// Pre-populated Vehicle Database
+// Comprehensive Indian Vehicles & Mileage Database (Motorcycles, Scooters, Cars, EVs)
 export const VEHICLE_DATABASE = [
-  { id: 1, brand: 'Royal Enfield', model_name: 'Classic 350 (Bike)', type: 'bike', mileage_kmpl: 35.0, fuel_type: 'petrol' },
-  { id: 2, brand: 'Honda', model_name: 'Activa 6G (Scooter)', type: 'scooter', mileage_kmpl: 45.0, fuel_type: 'petrol' },
-  { id: 3, brand: 'Bajaj', model_name: 'Pulsar 150 (Bike)', type: 'bike', mileage_kmpl: 48.0, fuel_type: 'petrol' },
-  { id: 4, brand: 'Maruti Suzuki', model_name: 'Swift Dzire (Car)', type: 'car', mileage_kmpl: 18.5, fuel_type: 'petrol' },
-  { id: 5, brand: 'Hyundai', model_name: 'i20 Petrol (Car)', type: 'car', mileage_kmpl: 16.0, fuel_type: 'petrol' },
-  { id: 6, brand: 'TVS', model_name: 'Jupiter 110 (Scooter)', type: 'scooter', mileage_kmpl: 46.0, fuel_type: 'petrol' },
-  { id: 7, brand: 'Tata', model_name: 'Nexon EV (Car)', type: 'ev', mileage_kmpl: 0.15, fuel_type: 'electric' },
-  { id: 8, brand: 'Ather', model_name: '450X (Scooter)', type: 'ev', mileage_kmpl: 0.03, fuel_type: 'electric' },
+  // Motorcycles
+  { id: 1, brand: 'Royal Enfield', model_name: 'Classic 350 (Motorcycle)', type: 'bike', mileage_kmpl: 35.0, fuel_type: 'petrol' },
+  { id: 2, brand: 'Royal Enfield', model_name: 'Hunter 350 (Motorcycle)', type: 'bike', mileage_kmpl: 36.5, fuel_type: 'petrol' },
+  { id: 3, brand: 'Royal Enfield', model_name: 'Himalayan 450 (Adventure)', type: 'bike', mileage_kmpl: 30.0, fuel_type: 'petrol' },
+  { id: 4, brand: 'Hero', model_name: 'Splendor Plus (Motorcycle)', type: 'bike', mileage_kmpl: 65.0, fuel_type: 'petrol' },
+  { id: 5, brand: 'Bajaj', model_name: 'Pulsar 150 (Motorcycle)', type: 'bike', mileage_kmpl: 48.0, fuel_type: 'petrol' },
+  { id: 6, brand: 'TVS', model_name: 'Apache RTR 160 (Motorcycle)', type: 'bike', mileage_kmpl: 45.0, fuel_type: 'petrol' },
+  { id: 7, brand: 'Honda', model_name: 'Shine 125 (Motorcycle)', type: 'bike', mileage_kmpl: 55.0, fuel_type: 'petrol' },
+  { id: 8, brand: 'Yamaha', model_name: 'MT-15 V2 (Motorcycle)', type: 'bike', mileage_kmpl: 45.0, fuel_type: 'petrol' },
+  { id: 9, brand: 'KTM', model_name: 'Duke 200 (Motorcycle)', type: 'bike', mileage_kmpl: 33.0, fuel_type: 'petrol' },
+
+  // Scooters
+  { id: 10, brand: 'Honda', model_name: 'Activa 6G (Scooter)', type: 'scooter', mileage_kmpl: 45.0, fuel_type: 'petrol' },
+  { id: 11, brand: 'TVS', model_name: 'Jupiter 110 (Scooter)', type: 'scooter', mileage_kmpl: 46.0, fuel_type: 'petrol' },
+  { id: 12, brand: 'Suzuki', model_name: 'Access 125 (Scooter)', type: 'scooter', mileage_kmpl: 48.0, fuel_type: 'petrol' },
+  { id: 13, brand: 'TVS', model_name: 'Ntorq 125 (Scooter)', type: 'scooter', mileage_kmpl: 40.0, fuel_type: 'petrol' },
+  { id: 14, brand: 'Ather', model_name: '450X (EV Scooter)', type: 'ev', mileage_kmpl: 0.03, fuel_type: 'electric' }, // 0.03 kWh/km
+  { id: 15, brand: 'Ola', model_name: 'S1 Pro (EV Scooter)', type: 'ev', mileage_kmpl: 0.035, fuel_type: 'electric' },
+  { id: 16, brand: 'TVS', model_name: 'iQube (EV Scooter)', type: 'ev', mileage_kmpl: 0.032, fuel_type: 'electric' },
+
+  // Cars
+  { id: 17, brand: 'Maruti Suzuki', model_name: 'Swift Dzire Petrol (Car)', type: 'car', mileage_kmpl: 22.4, fuel_type: 'petrol' },
+  { id: 18, brand: 'Maruti Suzuki', model_name: 'Baleno Petrol (Car)', type: 'car', mileage_kmpl: 22.3, fuel_type: 'petrol' },
+  { id: 19, brand: 'Hyundai', model_name: 'i20 Petrol (Car)', type: 'car', mileage_kmpl: 16.0, fuel_type: 'petrol' },
+  { id: 20, brand: 'Hyundai', model_name: 'Creta Petrol (Car)', type: 'car', mileage_kmpl: 14.0, fuel_type: 'petrol' },
+  { id: 21, brand: 'Hyundai', model_name: 'Creta Diesel (Car)', type: 'car', mileage_kmpl: 18.0, fuel_type: 'diesel' },
+  { id: 22, brand: 'Tata', model_name: 'Punch Petrol (Car)', type: 'car', mileage_kmpl: 18.8, fuel_type: 'petrol' },
+  { id: 23, brand: 'Tata', model_name: 'Nexon Petrol (Car)', type: 'car', mileage_kmpl: 17.0, fuel_type: 'petrol' },
+  { id: 24, brand: 'Tata', model_name: 'Nexon EV Long Range (Car)', type: 'ev', mileage_kmpl: 0.15, fuel_type: 'electric' }, // 0.15 kWh/km
+  { id: 25, brand: 'MG', model_name: 'ZS EV (Electric Car)', type: 'ev', mileage_kmpl: 0.16, fuel_type: 'electric' },
+  { id: 26, brand: 'Kia', model_name: 'Seltos Petrol (Car)', type: 'car', mileage_kmpl: 13.8, fuel_type: 'petrol' },
+  { id: 27, brand: 'Mahindra', model_name: 'Thar 4x4 (Car)', type: 'car', mileage_kmpl: 12.0, fuel_type: 'diesel' },
+  { id: 28, brand: 'Toyota', model_name: 'Fortuner Diesel (Car)', type: 'car', mileage_kmpl: 10.5, fuel_type: 'diesel' },
+  { id: 29, brand: 'Honda', model_name: 'City Petrol (Car)', type: 'car', mileage_kmpl: 17.8, fuel_type: 'petrol' },
 ];
 
 export async function fetchVehicles() {
@@ -101,9 +127,11 @@ export async function predictExpense(formData) {
       }
     };
   } catch {
-    // High-precision ML Gradient Boosting Emulator Fallback for Standalone Web Deployment
-    const fuelReq = (payload.distance_km / (payload.mileage_kmpl || 35)).toFixed(2);
-    const fuelCost = Math.round(fuelReq * (payload.vehicle_type === 'ev' ? 8.5 : 102));
+    const isEV = payload.vehicle_type === 'ev';
+    const fuelReq = isEV 
+      ? (payload.distance_km * (payload.mileage_kmpl || 0.15)).toFixed(2)
+      : (payload.distance_km / (payload.mileage_kmpl || 35)).toFixed(2);
+    const fuelCost = Math.round(fuelReq * (isEV ? 8.5 : 102));
     
     const foodBase = payload.food_budget_tier === 'fine_dining' ? 650 : (payload.food_budget_tier === 'mid_range' ? 300 : 150);
     const foodCost = foodBase * 3 * payload.people_count;

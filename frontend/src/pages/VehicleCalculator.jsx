@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Fuel, Zap, Calculator, Navigation, MapPin, ArrowRight } from 'lucide-react';
+import { VEHICLE_DATABASE } from '../services/api';
 
 // Haversine Distance Formula for Real-World Route Math
 function calculateHaversineKm(lat1, lon1, lat2, lon2) {
@@ -12,7 +13,6 @@ function calculateHaversineKm(lat1, lon1, lat2, lon2) {
     Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   const straightKm = R * c;
-  // Apply 1.25x road curvature factor for highway driving route
   return Math.round(straightKm * 1.25);
 }
 
@@ -21,13 +21,13 @@ export default function VehicleCalculator() {
   const [destinationCity, setDestinationCity] = useState('Kanyakumari');
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
 
-  const [vehicleType, setVehicleType] = useState('petrol_bike');
-  const [distanceKm, setDistanceKm] = useState(700); // Updated up to 50000 km
+  const [selectedVehicleName, setSelectedVehicleName] = useState('Royal Enfield Classic 350 (Motorcycle)');
+  const [vehicleType, setVehicleType] = useState('bike');
+  const [distanceKm, setDistanceKm] = useState(700);
   const [mileageKmpl, setMileageKmpl] = useState(35);
   const [fuelPricePerL, setFuelPricePerL] = useState(102);
 
   // EV fields
-  const [evConsumptionPerKm, setEvConsumptionPerKm] = useState(0.12); // kWh/km
   const [electricityCostPerKwh, setElectricityCostPerKwh] = useState(8.5); // ₹/kWh
 
   const isEV = vehicleType === 'ev';
@@ -36,7 +36,7 @@ export default function VehicleCalculator() {
   const fuelRequiredLiters = !isEV && mileageKmpl > 0 ? (distanceKm / mileageKmpl).toFixed(2) : 0;
   const fuelCostInr = !isEV ? Math.round(fuelRequiredLiters * fuelPricePerL) : 0;
 
-  const energyRequiredKwh = isEV ? (distanceKm * evConsumptionPerKm).toFixed(2) : 0;
+  const energyRequiredKwh = isEV ? (distanceKm * mileageKmpl).toFixed(2) : 0;
   const evChargingCostInr = isEV ? Math.round(energyRequiredKwh * electricityCostPerKwh) : 0;
 
   const totalCost = isEV ? evChargingCostInr : fuelCostInr;
@@ -77,8 +77,8 @@ export default function VehicleCalculator() {
         <div style={{ display: 'inline-flex', background: 'rgba(6, 182, 212, 0.15)', padding: '0.6rem', borderRadius: '14px', color: 'var(--accent-cyan)', marginBottom: '0.75rem' }}>
           <Calculator size={32} />
         </div>
-        <h1 style={{ fontSize: '2rem', color: '#ffffff' }}>Automatic Route & Fuel Calculator</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Auto-compute exact driving distance (up to 50,000 km) and fuel expense between starting location and destination</p>
+        <h1 style={{ fontSize: '2rem', color: '#ffffff' }}>Automatic Route & Vehicle Fuel Calculator</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Auto-compute distance (up to 50,000 km) and fuel expense for 29 Indian bikes, scooters, cars, and EVs</p>
       </div>
 
       {/* Auto Route Origin -> Destination Card */}
@@ -124,15 +124,24 @@ export default function VehicleCalculator() {
           <h3 style={{ color: '#ffffff', marginBottom: '1.25rem', fontSize: '1.1rem' }}>Trip Parameters</h3>
 
           <div className="input-group">
-            <label className="input-label">Vehicle Powertrain Type</label>
+            <label className="input-label">Select Vehicle ({VEHICLE_DATABASE.length} Models)</label>
             <select
               className="select-field"
-              value={vehicleType}
-              onChange={(e) => setVehicleType(e.target.value)}
+              value={selectedVehicleName}
+              onChange={(e) => {
+                const sel = VEHICLE_DATABASE.find(v => v.model_name === e.target.value);
+                if (sel) {
+                  setSelectedVehicleName(sel.model_name);
+                  setVehicleType(sel.type);
+                  setMileageKmpl(sel.mileage_kmpl);
+                }
+              }}
             >
-              <option value="petrol_bike">Petrol Motorcycle / Scooter</option>
-              <option value="petrol_car">Petrol / Diesel Car</option>
-              <option value="ev">Electric Vehicle (EV Bike / Car)</option>
+              {VEHICLE_DATABASE.map(v => (
+                <option key={v.id} value={v.model_name}>
+                  {v.brand} {v.model_name} — {v.mileage_kmpl} {v.type === 'ev' ? 'kWh/km' : 'km/L'}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -164,6 +173,7 @@ export default function VehicleCalculator() {
                 <label className="input-label">Vehicle Mileage (km/L)</label>
                 <input
                   type="number"
+                  step="0.1"
                   className="input-field"
                   value={mileageKmpl}
                   onChange={(e) => setMileageKmpl(parseFloat(e.target.value) || 1)}
@@ -187,12 +197,12 @@ export default function VehicleCalculator() {
                   type="number"
                   step="0.01"
                   className="input-field"
-                  value={evConsumptionPerKm}
-                  onChange={(e) => setEvConsumptionPerKm(parseFloat(e.target.value) || 0.1)}
+                  value={mileageKmpl}
+                  onChange={(e) => setMileageKmpl(parseFloat(e.target.value) || 0.1)}
                 />
               </div>
               <div className="input-group">
-                <label className="input-label">Electricity Cost (₹ / kWh)</label>
+                <label className="input-label">Electricity Tariff (₹ / kWh)</label>
                 <input
                   type="number"
                   step="0.5"

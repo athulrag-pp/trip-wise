@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Hotel, Utensils, Car, Compass, IndianRupee, ArrowRight, ArrowLeft, CheckCircle2, Fuel, Navigation } from 'lucide-react';
+import { VEHICLE_DATABASE } from '../services/api';
 
 export default function PlanMyDay({ initialCity, onSubmitPlan }) {
   const [currentStep, setCurrentStep] = useState(1);
@@ -15,8 +16,8 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
     foodBudgetTier: 'mid_range',
     transportType: 'personal_vehicle',
     vehicleType: 'bike',
-    vehicleName: 'Royal Enfield Classic 350',
-    distanceKm: 700, // Updated max up to 50000 km
+    vehicleName: 'Royal Enfield Classic 350 (Motorcycle)',
+    distanceKm: 700,
     mileageKmpl: 35,
     activities: ['sightseeing', 'beach', 'cafe'],
     dailyBudget: 2500,
@@ -45,16 +46,6 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
     e.preventDefault();
     onSubmitPlan(formData);
   };
-
-  const vehicleOptions = [
-    { name: 'Royal Enfield Classic 350 (Bike)', type: 'bike', mileage: 35 },
-    { name: 'Honda Activa 6G (Scooter)', type: 'scooter', mileage: 45 },
-    { name: 'Bajaj Pulsar 150 (Bike)', type: 'bike', mileage: 48 },
-    { name: 'Swift Dzire Petrol (Car)', type: 'car', mileage: 18.5 },
-    { name: 'Hyundai i20 Petrol (Car)', type: 'car', mileage: 16 },
-    { name: 'TVS Jupiter (Scooter)', type: 'scooter', mileage: 46 },
-    { name: 'Tata Nexon EV (Car)', type: 'ev', mileage: 0.15 },
-  ];
 
   return (
     <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '2rem auto', padding: '0 1.5rem' }}>
@@ -270,7 +261,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
           </div>
         )}
 
-        {/* Step 5: Vehicle Selection */}
+        {/* Step 5: Vehicle Selection with Expanded Database */}
         {currentStep === 5 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -284,25 +275,25 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
             </div>
 
             <div className="input-group">
-              <label className="input-label">Choose Vehicle from Database</label>
+              <label className="input-label">Choose Vehicle from Database ({VEHICLE_DATABASE.length} Models)</label>
               <select
                 className="select-field"
                 value={formData.vehicleName}
                 onChange={(e) => {
-                  const sel = vehicleOptions.find((v) => v.name === e.target.value);
+                  const sel = VEHICLE_DATABASE.find((v) => v.model_name === e.target.value);
                   if (sel) {
                     setFormData((prev) => ({
                       ...prev,
-                      vehicleName: sel.name,
+                      vehicleName: sel.model_name,
                       vehicleType: sel.type,
-                      mileageKmpl: sel.mileage
+                      mileageKmpl: sel.mileage_kmpl
                     }));
                   }
                 }}
               >
-                {vehicleOptions.map((v) => (
-                  <option key={v.name} value={v.name}>
-                    {v.name} — {v.mileage} {v.type === 'ev' ? 'kWh/km' : 'km/L'}
+                {VEHICLE_DATABASE.map((v) => (
+                  <option key={v.id} value={v.model_name}>
+                    {v.brand} {v.model_name} — {v.mileage_kmpl} {v.type === 'ev' ? 'kWh/km' : 'km/L'}
                   </option>
                 ))}
               </select>
@@ -312,7 +303,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               <label className="input-label">Vehicle Mileage ({formData.vehicleType === 'ev' ? 'kWh/km' : 'km/L'})</label>
               <input
                 type="number"
-                step="0.1"
+                step="0.01"
                 className="input-field"
                 value={formData.mileageKmpl}
                 onChange={(e) => updateField('mileageKmpl', parseFloat(e.target.value) || 30)}
