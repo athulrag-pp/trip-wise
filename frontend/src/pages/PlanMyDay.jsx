@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { MapPin, Hotel, Utensils, Car, Compass, IndianRupee, ArrowRight, ArrowLeft, CheckCircle2, Fuel } from 'lucide-react';
+import { MapPin, Hotel, Utensils, Car, Compass, IndianRupee, ArrowRight, ArrowLeft, CheckCircle2, Fuel, Navigation } from 'lucide-react';
 
 export default function PlanMyDay({ initialCity, onSubmitPlan }) {
   const [currentStep, setCurrentStep] = useState(1);
 
   // Form State
   const [formData, setFormData] = useState({
-    city: initialCity || 'Chennai',
+    originCity: 'Chennai',
+    city: initialCity || 'Kanyakumari',
     needsHotel: false,
     hotelBudget: 1200,
     hotelRating: 4.0,
@@ -15,10 +16,10 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
     transportType: 'personal_vehicle',
     vehicleType: 'bike',
     vehicleName: 'Royal Enfield Classic 350',
-    distanceKm: 60,
+    distanceKm: 700, // Updated max up to 50000 km
     mileageKmpl: 35,
     activities: ['sightseeing', 'beach', 'cafe'],
-    dailyBudget: 1500,
+    dailyBudget: 2500,
     peopleCount: 1,
   });
 
@@ -49,9 +50,10 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
     { name: 'Royal Enfield Classic 350 (Bike)', type: 'bike', mileage: 35 },
     { name: 'Honda Activa 6G (Scooter)', type: 'scooter', mileage: 45 },
     { name: 'Bajaj Pulsar 150 (Bike)', type: 'bike', mileage: 48 },
-    { name: 'Swift Dzire Petrol (Car)', type: 'car', mileage: 18 },
+    { name: 'Swift Dzire Petrol (Car)', type: 'car', mileage: 18.5 },
     { name: 'Hyundai i20 Petrol (Car)', type: 'car', mileage: 16 },
     { name: 'TVS Jupiter (Scooter)', type: 'scooter', mileage: 46 },
+    { name: 'Tata Nexon EV (Car)', type: 'ev', mileage: 0.15 },
   ];
 
   return (
@@ -78,7 +80,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
 
       {/* Wizard Form Card */}
       <form onSubmit={handleSubmit} className="glass-card" style={{ padding: '2.5rem' }}>
-        {/* Step 1: Destination */}
+        {/* Step 1: Origin & Destination */}
         {currentStep === 1 && (
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
@@ -86,9 +88,21 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
                 <MapPin size={28} />
               </div>
               <div>
-                <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Where are you traveling?</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Enter your destination city in India</p>
+                <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Starting Location & Destination</h2>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Enter your origin city and target destination</p>
               </div>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Starting Point / Origin City</label>
+              <input
+                type="text"
+                required
+                className="input-field"
+                value={formData.originCity}
+                onChange={(e) => updateField('originCity', e.target.value)}
+                placeholder="e.g. Chennai, Mumbai, Delhi, Hyderabad"
+              />
             </div>
 
             <div className="input-group">
@@ -99,7 +113,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
                 className="input-field"
                 value={formData.city}
                 onChange={(e) => updateField('city', e.target.value)}
-                placeholder="e.g. Chennai, Bengaluru, Mumbai, Jaipur"
+                placeholder="e.g. Kanyakumari, Bengaluru, Goa, Jaipur"
               />
             </div>
 
@@ -108,7 +122,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               <input
                 type="number"
                 min="1"
-                max="10"
+                max="20"
                 className="input-field"
                 value={formData.peopleCount}
                 onChange={(e) => updateField('peopleCount', parseInt(e.target.value) || 1)}
@@ -231,7 +245,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Transportation Mode</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>How will you get around the city?</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>How will you travel on this route?</p>
               </div>
             </div>
 
@@ -239,8 +253,8 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               {[
                 { id: 'personal_vehicle', label: 'Personal Bike/Car' },
                 { id: 'rental_vehicle', label: 'Rental Vehicle' },
-                { id: 'public_transport', label: 'Public Transit (Bus/Metro)' },
-                { id: 'taxi', label: 'Cab / Auto Rickshaw' },
+                { id: 'public_transport', label: 'Public Transit (Bus/Train)' },
+                { id: 'taxi', label: 'Cab / Taxi' },
               ].map((opt) => (
                 <button
                   key={opt.id}
@@ -265,79 +279,80 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Vehicle Details</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Select your vehicle to compute mileage & fuel expense</p>
-              </div>
-            </div>
-
-            {formData.transportType === 'personal_vehicle' || formData.transportType === 'rental_vehicle' ? (
-              <div>
-                <div className="input-group">
-                  <label className="input-label">Choose Vehicle from Database</label>
-                  <select
-                    className="select-field"
-                    value={formData.vehicleName}
-                    onChange={(e) => {
-                      const sel = vehicleOptions.find((v) => v.name === e.target.value);
-                      if (sel) {
-                        setFormData((prev) => ({
-                          ...prev,
-                          vehicleName: sel.name,
-                          vehicleType: sel.type,
-                          mileageKmpl: sel.mileage
-                        }));
-                      }
-                    }}
-                  >
-                    {vehicleOptions.map((v) => (
-                      <option key={v.name} value={v.name}>
-                        {v.name} — {v.mileage} km/L
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="input-group">
-                  <label className="input-label">Vehicle Mileage (km/L)</label>
-                  <input
-                    type="number"
-                    className="input-field"
-                    value={formData.mileageKmpl}
-                    onChange={(e) => updateField('mileageKmpl', parseFloat(e.target.value) || 30)}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div style={{ padding: '1.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', color: 'var(--text-muted)' }}>
-                You selected <strong>{formData.transportType.replace('_', ' ')}</strong>. Standard fare rules will be applied.
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Step 6: Expected Distance */}
-        {currentStep === 6 && (
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
-              <div style={{ background: 'rgba(99, 102, 241, 0.15)', padding: '0.6rem', borderRadius: '12px', color: 'var(--accent-primary)' }}>
-                <Compass size={28} />
-              </div>
-              <div>
-                <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Expected Travel Distance</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Approximate distance in kilometers you will cover today</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Select vehicle to compute mileage & fuel expense</p>
               </div>
             </div>
 
             <div className="input-group">
-              <label className="input-label">Distance (km): {formData.distanceKm} km</label>
+              <label className="input-label">Choose Vehicle from Database</label>
+              <select
+                className="select-field"
+                value={formData.vehicleName}
+                onChange={(e) => {
+                  const sel = vehicleOptions.find((v) => v.name === e.target.value);
+                  if (sel) {
+                    setFormData((prev) => ({
+                      ...prev,
+                      vehicleName: sel.name,
+                      vehicleType: sel.type,
+                      mileageKmpl: sel.mileage
+                    }));
+                  }
+                }}
+              >
+                {vehicleOptions.map((v) => (
+                  <option key={v.name} value={v.name}>
+                    {v.name} — {v.mileage} {v.type === 'ev' ? 'kWh/km' : 'km/L'}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label">Vehicle Mileage ({formData.vehicleType === 'ev' ? 'kWh/km' : 'km/L'})</label>
+              <input
+                type="number"
+                step="0.1"
+                className="input-field"
+                value={formData.mileageKmpl}
+                onChange={(e) => updateField('mileageKmpl', parseFloat(e.target.value) || 30)}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Upgraded Distance Range up to 50,000 km */}
+        {currentStep === 6 && (
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+              <div style={{ background: 'rgba(99, 102, 241, 0.15)', padding: '0.6rem', borderRadius: '12px', color: 'var(--accent-primary)' }}>
+                <Navigation size={28} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Total Route Distance</h2>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Distance from {formData.originCity} to {formData.city}</p>
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Route Distance:</span>
+                <strong style={{ color: 'var(--accent-cyan)', fontSize: '1.2rem' }}>{formData.distanceKm.toLocaleString()} km</strong>
+              </label>
               <input
                 type="range"
-                min="10"
-                max="250"
-                step="5"
+                min="5"
+                max="50000"
+                step="10"
                 value={formData.distanceKm}
                 onChange={(e) => updateField('distanceKm', parseInt(e.target.value))}
                 style={{ width: '100%', margin: '1rem 0' }}
               />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                <span>5 km</span>
+                <span>10,000 km</span>
+                <span>50,000 km</span>
+              </div>
             </div>
           </div>
         )}
@@ -351,7 +366,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Planned Activities</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Select all activities you intend to do</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Select all activities planned</p>
               </div>
             </div>
 
@@ -386,7 +401,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               </div>
               <div>
                 <h2 style={{ fontSize: '1.4rem', color: '#ffffff' }}>Your Target Daily Budget</h2>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Enter how much you plan to spend today (₹)</p>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Enter how much you plan to spend (₹)</p>
               </div>
             </div>
 
@@ -394,8 +409,8 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
               <label className="input-label">Target Daily Budget (₹)</label>
               <input
                 type="number"
-                min="300"
-                step="100"
+                min="500"
+                step="500"
                 className="input-field"
                 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-emerald)' }}
                 value={formData.dailyBudget}
@@ -413,7 +428,7 @@ export default function PlanMyDay({ initialCity, onSubmitPlan }) {
             }}>
               <h4 style={{ color: '#ffffff', marginBottom: '0.5rem' }}>Trip Summary</h4>
               <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                📍 {formData.city} • 🚗 {formData.vehicleName} ({formData.distanceKm} km) • 🍽️ {formData.foodPreference} • 👥 {formData.peopleCount} Traveler(s)
+                📍 Route: <strong>{formData.originCity}</strong> $\rightarrow$ <strong>{formData.city}</strong> • 🚗 {formData.vehicleName} ({formData.distanceKm.toLocaleString()} km) • 👥 {formData.peopleCount} Traveler(s)
               </p>
             </div>
           </div>
