@@ -1,9 +1,8 @@
 import React from 'react';
-import { Clock, MapPin, Utensils, Compass, Coffee, Moon, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Clock, MapPin, Utensils, Compass, Coffee, Moon, CheckCircle2, Navigation, Search, ExternalLink } from 'lucide-react';
 
 export default function MyItinerary({ predictionResult }) {
   const city = predictionResult?.city || 'Chennai';
-  const foodPref = predictionResult?.foodPref || 'non_veg';
 
   const defaultTimeline = [
     { time: '08:30 AM', title: 'Breakfast & Morning Coffee', type: 'food', spot: 'Murugan Idli Shop', estCost: 150, details: 'Traditional South Indian breakfast (Idli, Vada, Filter Coffee)' },
@@ -15,6 +14,14 @@ export default function MyItinerary({ predictionResult }) {
     { time: '10:00 PM', title: 'Return Journey', type: 'return', spot: 'Accommodation / Home', estCost: 0, details: 'End of day trip schedule' },
   ];
 
+  const getGoogleSearchUrl = (spotName) => {
+    return `https://www.google.com/search?q=${encodeURIComponent(spotName + ' ' + city)}`;
+  };
+
+  const getGoogleMapsUrl = (spotName) => {
+    return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spotName + ' ' + city)}`;
+  };
+
   return (
     <div className="animate-fade-in" style={{ maxWidth: '850px', margin: '2rem auto', padding: '0 1.5rem' }}>
       <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
@@ -22,7 +29,7 @@ export default function MyItinerary({ predictionResult }) {
           <Clock size={32} />
         </div>
         <h1 style={{ fontSize: '2rem', color: '#ffffff' }}>Your Personalized Daily Itinerary</h1>
-        <p style={{ color: 'var(--text-muted)' }}>Auto-generated timeline optimized for your budget in <strong>{city}</strong></p>
+        <p style={{ color: 'var(--text-muted)' }}>Auto-generated timeline schedule connected with Google Search & Navigation for <strong>{city}</strong></p>
       </div>
 
       {/* Timeline List */}
@@ -73,7 +80,32 @@ export default function MyItinerary({ predictionResult }) {
               </div>
               <h3 style={{ fontSize: '1.15rem', color: '#ffffff', marginBottom: '0.25rem' }}>{item.title}</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>📍 <strong>{item.spot}</strong></p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)' }}>{item.details}</p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '1rem' }}>{item.details}</p>
+
+              {/* Direct Web Browser Search & Navigation Links */}
+              {item.type !== 'return' && (
+                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <a
+                    href={getGoogleSearchUrl(item.spot)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-outline"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                  >
+                    <Search size={12} /> Search on Google
+                  </a>
+
+                  <a
+                    href={getGoogleMapsUrl(item.spot)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="btn btn-primary"
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                  >
+                    <Navigation size={12} /> Open in Google Maps
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         ))}
