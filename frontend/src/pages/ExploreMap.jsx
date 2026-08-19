@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
-import { Search, MapPin, Hotel, Utensils, Fuel, Hospital, DollarSign, Compass, Star, ExternalLink, Navigation, Car, ShoppingBag } from 'lucide-react';
+import { Search, MapPin, Hotel, Utensils, Fuel, Hospital, Compass, Star, Navigation, Car, Crosshair, ExternalLink } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
-// Fix default Leaflet marker icons in React Vite
+// Fix for default Leaflet marker icons in React Vite
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -13,23 +13,99 @@ L.Icon.Default.mergeOptions({
 });
 
 // Custom Colored Map Pins
-const createCustomPin = (color) => {
+const createCustomPin = (color, isTarget = false) => {
+  const size = isTarget ? 32 : 26;
+  const pulse = isTarget ? 'animation: pulse 1.5s infinite;' : '';
   return L.divIcon({
     className: 'custom-map-pin',
-    html: `<div style="background-color: ${color}; width: 26px; height: 26px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.5);"></div>`,
-    iconSize: [26, 26],
-    iconAnchor: [13, 13]
+    html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 4px 14px rgba(0,0,0,0.6); ${pulse}"></div>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2]
   });
 };
 
 const pinIcons = {
-  hotel: createCustomPin('#a855f7'),      // Purple
-  restaurant: createCustomPin('#10b981'), // Green
-  fuel: createCustomPin('#f43f5e'),       // Red
-  hospital: createCustomPin('#06b6d4'),   // Cyan
-  atm: createCustomPin('#f59e0b'),        // Amber
-  attraction: createCustomPin('#6366f1'), // Indigo
+  userTarget: createCustomPin('#ec4899', true), // Bright Pink Pulsing Target
+  hotel: createCustomPin('#a855f7'),           // Purple
+  restaurant: createCustomPin('#10b981'),      // Green
+  fuel: createCustomPin('#f43f5e'),            // Red
+  hospital: createCustomPin('#06b6d4'),        // Cyan
+  atm: createCustomPin('#f59e0b'),             // Amber
+  attraction: createCustomPin('#6366f1'),      // Indigo
 };
+
+// Component to handle Map Clicking and Custom Pin Placement
+function LocationMarker({ userPin, setUserPin }) {
+  useMapEvents({
+    click(e) {
+      const { lat, lng } = e.latlng;
+      setUserPin({
+        lat: parseFloat(lat.toFixed(5)),
+        lng: parseFloat(lng.toFixed(5)),
+        address: 'Fetching real-world address...'
+      });
+
+      // Call OpenStreetMap Nominatim Reverse Geocoding API
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.display_name) {
+            setUserPin(prev => ({
+              ...prev,
+              address: data.display_name
+            }));
+          }
+        })
+        .catch(err => {
+          console.warn('Reverse geocoding error:', err);
+          setUserPin(prev => ({
+            ...prev,
+            address: `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`
+          }));
+        });
+    },
+  });
+
+  return userPin ? (
+    <Marker position={[userPin.lat, userPin.lng]} icon={pinIcons.userTarget}>
+      <Popup>
+        <div style={{ color: '#111827', fontFamily: 'sans-serif', minWidth: '220px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ec4899', fontWeight: 'bold', fontSize: '0.9rem', marginBottom: '0.3rem' }}>
+            <Crosshair size={16} /> Selected Search Pin
+          </div>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#374151', lineHeight: 1.4 }}>
+            📍 <strong>Address:</strong> {userPin.address}
+          </p>
+          <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.6rem' }}>
+            GPS: {userPin.lat}, {userPin.lng}
+          </div>
+
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${userPin.lat},${userPin.lng}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              background: '#4285F4',
+              color: '#ffffff',
+              padding: '0.4rem 0.75rem',
+              borderRadius: '6px',
+              fontSize: '0.8rem',
+              textDecoration: 'none',
+              fontWeight: 600,
+              width: '100%'
+            }}
+          >
+            <Navigation size={14} /> Open Location in Google Maps
+          </a>
+        </div>
+      </Popup>
+    </Marker>
+  ) : null;
+}
 
 function ChangeView({ center, zoom }) {
   const map = useMap();
@@ -47,8 +123,9 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
   const [mapCenter, setMapCenter] = useState([13.0827, 80.2707]); // Default Chennai
   const [filterCategory, setFilterCategory] = useState('all');
   const [isLoading, setIsLoading] = useState(false);
+  const [userPin, setUserPin] = useState(null);
 
-  // Multi-City Real Places, Hotels, & App Integrations Database
+  // Multi-City Database
   const CITY_POI_DATABASE = {
     Chennai: [
       { id: 101, name: 'ITC Grand Chola', category: 'hotel', rating: 4.8, lat: 13.0105, lng: 80.2206, details: '5-Star Luxury Hotel in Guindy', price: '₹9,500/night', bookUrl: 'https://www.makemytrip.com/hotels/itc_grand_chola-hotels-in-chennai.html' },
@@ -66,14 +143,12 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
       { id: 201, name: 'The Leela Palace Bengaluru', category: 'hotel', rating: 4.9, lat: 12.9606, lng: 77.6484, details: 'Grand Palace Hotel on Old Airport Road', price: '₹13,500/night', bookUrl: 'https://www.makemytrip.com/hotels/the_leela_palace-hotels-in-bangalore.html' },
       { id: 202, name: 'The Oberoi Bengaluru', category: 'hotel', rating: 4.8, lat: 12.9734, lng: 77.6186, details: 'Luxury Garden Hotel on MG Road', price: '₹11,000/night', bookUrl: 'https://www.booking.com/hotel/in/the-oberoi-bangalore.html' },
       { id: 203, name: 'MTR (Mavalli Tiffin Room)', category: 'restaurant', rating: 4.7, lat: 12.9551, lng: 77.5863, details: 'Iconic Rava Idli & Masala Dosa', price: '₹200 for two', foodUrl: 'https://www.zomato.com/bangalore/mavalli-tiffin-room-mtr-basavanagudi' },
-      { id: 204, name: 'Vidyarthi Bhavan', category: 'restaurant', rating: 4.8, lat: 12.9438, lng: 77.5714, details: 'Legendary Crispy Masala Dosa in Gandhi Bazaar', price: '₹150 for two', foodUrl: 'https://www.swiggy.com/restaurants/vidyarthi-bhavan-basavanagudi-bangalore-34226' },
-      { id: 205, name: 'Lalbagh Botanical Garden', category: 'attraction', rating: 4.6, lat: 12.9507, lng: 77.5848, details: 'Historical 240-acre garden & Glass House', price: '₹30 entry' },
+      { id: 204, name: 'Lalbagh Botanical Garden', category: 'attraction', rating: 4.6, lat: 12.9507, lng: 77.5848, details: 'Historical 240-acre garden & Glass House', price: '₹30 entry' },
     ],
     Mumbai: [
       { id: 301, name: 'The Taj Mahal Palace Mumbai', category: 'hotel', rating: 4.9, lat: 18.9220, lng: 72.8332, details: 'Iconic Heritage Luxury Hotel facing Gateway of India', price: '₹18,000/night', bookUrl: 'https://www.makemytrip.com/hotels/taj_mahal_palace-hotels-in-mumbai.html' },
       { id: 302, name: 'Trident Nariman Point', category: 'hotel', rating: 4.7, lat: 18.9267, lng: 72.8223, details: 'Marine Drive Bayfront Luxury Stay', price: '₹9,800/night', bookUrl: 'https://www.booking.com/hotel/in/trident-nariman-point.html' },
-      { id: 303, name: 'Bademiya Colaba', category: 'restaurant', rating: 4.5, lat: 18.9234, lng: 72.8312, details: 'Famous Late-Night Kebab & Roll Spot', price: '₹500 for two', foodUrl: 'https://www.zomato.com/mumbai/bademiya-colaba' },
-      { id: 304, name: 'Gateway of India', category: 'attraction', rating: 4.8, lat: 18.9220, lng: 72.8347, details: '20th-century monument overlooking Arabian Sea', price: 'Free' },
+      { id: 303, name: 'Gateway of India', category: 'attraction', rating: 4.8, lat: 18.9220, lng: 72.8347, details: '20th-century monument overlooking Arabian Sea', price: 'Free' },
     ]
   };
 
@@ -89,7 +164,10 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
       const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(targetCity)}&format=json&limit=1`);
       const data = await res.json();
       if (data && data.length > 0) {
-        setMapCenter([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
+        const newLat = parseFloat(data[0].lat);
+        const newLng = parseFloat(data[0].lon);
+        setMapCenter([newLat, newLng]);
+        setUserPin(null);
       }
     } catch (err) {
       console.warn('Geocoding fallback:', err);
@@ -107,9 +185,8 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
   ];
 
   const filteredPois = filterCategory === 'all' ? pois : pois.filter(p => p.category === filterCategory);
-  const hotelsList = pois.filter(p => p.category === 'hotel');
 
-  const getGoogleMapsUrl = (lat, lng, name) => {
+  const getGoogleMapsUrl = (name) => {
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(name + ' ' + activeCity)}`;
   };
 
@@ -121,10 +198,10 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
           <div>
             <h1 style={{ fontSize: '2rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <MapPin color="var(--accent-cyan)" /> Live Maps & App Integrations
+              <MapPin color="var(--accent-cyan)" /> Real-World Click-to-Pin Map & Google Navigation
             </h1>
             <p style={{ color: 'var(--text-muted)' }}>
-              Connected with <strong>Google Maps</strong>, <strong>MakeMyTrip</strong>, <strong>Booking.com</strong>, <strong>Zomato</strong> & <strong>Uber</strong>
+              💡 <strong>Tip:</strong> Click <i>anywhere</i> on the map below to drop a custom location pin and get real-world address & Google Maps navigation!
             </p>
           </div>
 
@@ -142,6 +219,29 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
             </button>
           </form>
         </div>
+
+        {/* Selected User Pin Banner */}
+        {userPin && (
+          <div style={{ marginTop: '1.25rem', padding: '1rem 1.25rem', background: 'rgba(236, 72, 153, 0.15)', border: '1px solid rgba(236, 72, 153, 0.4)', borderRadius: '12px', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+            <div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#ec4899', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                📍 Custom Clicked Target Pin
+              </span>
+              <p style={{ fontSize: '0.9rem', color: '#ffffff', margin: '0.2rem 0 0 0' }}>
+                {userPin.address}
+              </p>
+            </div>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${userPin.lat},${userPin.lng}`}
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary"
+              style={{ background: 'linear-gradient(135deg, #ec4899 0%, #be185d 100%)', padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+            >
+              <Navigation size={16} /> Open in Google Maps
+            </a>
+          </div>
+        )}
 
         {/* Category Filters */}
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '1.25rem', pt: '1rem', borderTop: '1px solid var(--border-color)' }}>
@@ -165,10 +265,10 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
         </div>
       </div>
 
-      {/* Main Grid: Leaflet Map (Left) + App Integrations Sidebar (Right) */}
+      {/* Main Grid: Interactive Clickable Map (Left) + Places List (Right) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.5rem' }}>
         
-        {/* Leaflet Map Card */}
+        {/* Leaflet Clickable Map Card */}
         <div className="glass-card" style={{ padding: '0.75rem', height: '620px', overflow: 'hidden' }}>
           <MapContainer
             center={mapCenter}
@@ -182,6 +282,10 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
+            {/* Click Handler to Drop Pin */}
+            <LocationMarker userPin={userPin} setUserPin={setUserPin} />
+
+            {/* Render POI Markers */}
             {filteredPois.map((poi) => (
               <Marker key={poi.id} position={[poi.lat, poi.lng]} icon={pinIcons[poi.category] || pinIcons.attraction}>
                 <Popup>
@@ -195,7 +299,7 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
                     {/* Action App Integration Links */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                       <a
-                        href={getGoogleMapsUrl(poi.lat, poi.lng, poi.name)}
+                        href={getGoogleMapsUrl(poi.name)}
                         target="_blank"
                         rel="noreferrer"
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', background: '#4285F4', color: '#fff', padding: '0.35rem 0.6rem', borderRadius: '6px', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}
@@ -267,7 +371,7 @@ export default function ExploreMap({ city: initialCity = 'Chennai' }) {
                 {/* App Buttons Row */}
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <a
-                    href={getGoogleMapsUrl(item.lat, item.lng, item.name)}
+                    href={getGoogleMapsUrl(item.name)}
                     target="_blank"
                     rel="noreferrer"
                     className="btn btn-outline"
