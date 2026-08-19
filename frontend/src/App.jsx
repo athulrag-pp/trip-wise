@@ -45,11 +45,17 @@ export default function App() {
     setActivePage('plan');
   };
 
-  const handlePlanSubmit = async (formData) => {
+  const handlePlanSubmit = async (formDataOrResult) => {
     setIsLoading(true);
     try {
-      const result = await predictExpense(formData);
-      setPredictionResult(result);
+      if (formDataOrResult.predictedExpense && formDataOrResult.breakdown) {
+        // Direct prediction object from AI planner
+        setPredictionResult(formDataOrResult);
+      } else {
+        // Form data object
+        const result = await predictExpense(formDataOrResult);
+        setPredictionResult(result);
+      }
       setActivePage('dashboard');
     } catch (err) {
       console.error('Error predicting expense:', err);
@@ -94,6 +100,7 @@ export default function App() {
           <Home
             onStartPlanning={handleStartPlanning}
             onExploreCalc={() => setActivePage('calc')}
+            onPlanSubmit={handlePlanSubmit}
           />
         )}
 

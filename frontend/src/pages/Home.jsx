@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowRight, Compass, ShieldCheck, Fuel, Map, Sparkles, TrendingUp, DollarSign } from 'lucide-react';
+import AIPromptPlanner from '../components/AIPromptPlanner';
 
-export default function Home({ onStartPlanning, onExploreCalc }) {
+export default function Home({ onStartPlanning, onExploreCalc, onPlanSubmit }) {
   const [quickCity, setQuickCity] = useState('');
 
   const handleStart = (e) => {
@@ -114,6 +115,13 @@ export default function Home({ onStartPlanning, onExploreCalc }) {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>OpenStreetMap & Open GIS APIs</p>
           </div>
         </div>
+
+        {/* AI Prompt Planner Section */}
+        {onPlanSubmit && (
+          <div style={{ textAlign: 'left', maxWidth: '900px', margin: '0 auto' }}>
+            <AIPromptPlanner onPlanGenerated={onPlanSubmit} />
+          </div>
+        )}
       </section>
 
       {/* Feature Cards Grid */}
